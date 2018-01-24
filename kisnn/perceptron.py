@@ -1,4 +1,4 @@
-from activation_functions import ActivationFunctions, ActivationType
+from utils.activation_functions import ActivationFunctions, ActivationType
 
 class Perceptron:
     """The most basic part of a neural network.
