@@ -1,4 +1,5 @@
 from utils.activation_functions import ActivationFunctions, ActivationType
+from random import random
 
 class Perceptron:
     """The most basic part of a neural network.
@@ -19,16 +20,23 @@ class Perceptron:
         # If weights were not passed as an argument, create them
         if not weights:
             for i in range(inputs_number):
-                self._weights.append(.1) # Arbitrarily chosen number
-                                         # for initial weights
+                self._weights.append(random()*2-1)
 
         # Add the Bias
-        self._weights.append(.1) # Arbitrarily chosen number for initial bias
+        self._weights.append(random()*2-1)
 
     def __str__(self):
-        return "Number of inputs: " + str(self._inputs_num) + \
-               "\nWeights: " + str(self._weights[:-1]) + \
-               "\nBias: " + str(self._weights[-1:])
+        weights = self._weights[:-1]
+        bias = self._weights[-1:]
+        return "Inputs:  " + str(self._inputs_num) +                    \
+                                                                        \
+               "\nWeights: [" +                                         \
+               ( "][".join(["%5.3f"]*len(weights)) % tuple(weights) ) + \
+               "]" +                                                    \
+                                                                        \
+               "\nBias:    [" +                                         \
+               ( "".join(["%5.3f"]*len(bias)) % tuple(bias) ) +         \
+               "]"
 
     def weighted_sum(self, inputs):
         """Calculates the weighted sum.
@@ -55,8 +63,9 @@ class Perceptron:
             wsum += float(inputs[i]) * float(self._weights[i])
 
         # Bias
-        wsum += self._weights[-1]
-        return wsum
+        wsum += float(self._weights[-1])
+        return round(wsum, 10) # Rounded to the 10th digit to return
+                               # "human-friendly" numbers
 
     def output(self, inputs, activation_type = ActivationType.SIGN):
         """Generates the output.
@@ -121,53 +130,93 @@ class Perceptron:
 
 # Testing
 if __name__ == "__main__":
-    inp = [[1,1], [1,0], [0,1] , [0,0]]
-    ans = [1, -1, -1, -1]
-    guess = []
-    lr = .01
+    inp = [[1,1], [1,0], [0,1], [0,0]]
+    ans = [    1,    -1,    -1,    -1]
+    lr = 1/9
+
+    p = Perceptron( len(inp[0]) )
+    squared_error = 1
+    prev_sq_err = 0
     i = 0
-    p = Perceptron(2)
 
-    def print_perceptron(p, i, inp, ans):
+    while squared_error > .1 and i < 1000:
         guess = []
-
-        print("Iteration %d" % i)
-        print()
-        print(p)
-
         for x in range(len(inp)):
             guess.append(p.output(inp[x]))
 
-        print("Guess: " + str(guess))
-        print("Answer: " + str(ans))
+        wsum = []
+        for x in range(len(inp)):
+            wsum.append(p.weighted_sum(inp[x]))
+
+        error = []
+        for x in range(len(ans)):
+            error.append(ans[x] - guess[x])
+
+        prev_sq_err = squared_error
+        squared_error = 0
+        for x in range(len(error)):
+            squared_error += error[x]*error[x]
+
+        squared_error = round(squared_error, 16)
+
+        print("Iteration %d" % i)
+        print("Learning Rate: %.3f\n" % lr)
+        print(p)
         print()
 
-        print_out(p, inp[0], guess, ans[0])
-        print_out(p, inp[1], guess, ans[1])
-        print_out(p, inp[2], guess, ans[2])
-        print_out(p, inp[3], guess, ans[3])
-        print("---------------")
-
-    def print_out(p, inp, guess, ans):
-        print("Input: " + str(inp))
-        print("Output: " + str(p.output(inp)), end="")
-        print(" (Weighted Sum: %f)" % p.weighted_sum(inp))
-        print("Expected: " + str(ans))
-        print("Error: " + str((ans) - p.output(inp)))
+        print("Inputs:   ", end="")
+        for x in range(len(inp)):
+            print("{0}".format(inp[x]), end = " ")
         print()
 
-    print_perceptron(p, i, inp, ans)
+        print("WSum:     ", end="")
+        for x in range(len(inp)):
+            spacing = len(("{0}".format(inp[x])))
+            print(("{0:"+str(spacing)+"."+str(spacing-3)+"f}").format(wsum[x]),
+            end = " ")
+        print()
 
-    while guess != ans:
-        guess = []
+        print("Output:   ", end="")
+        for x in range(len(inp)):
+            spacing = len(("{0}".format(inp[x])))
+            print(("{0:"+str(spacing)+"."+str(spacing-3)+"f}").format(guess[x]),
+            end = " ")
+        print()
+
+        print("Expected: ", end="")
+        for x in range(len(inp)):
+            spacing = len(("{0}".format(inp[x])))
+            print(("{0:"+str(spacing)+"."+str(spacing-3)+"f}").format(ans[x]),
+                   end = " ")
+        print()
+
+        print("Error:    ", end="")
+        for x in range(len(inp)):
+            spacing = len(("{0}".format(inp[x])))
+            print(("{0:"+str(spacing)+"."+str(spacing-3)+"f}").format(error[x]),
+                   end = " ")
+        print("\n")
+
+        spacing = len(("{0}".format(inp[0])))
+        print("Sq Error: " + ("{0:"+str(spacing)+"."+str(spacing-3)+"f}")
+              .format(squared_error))
+
+        if i != 0:
+            print("Previous: ", end="")
+            spacing = len(("{0}".format(inp[0])))
+            print(("{0:"+str(spacing)+"."+str(spacing-3)+"f}")
+                  .format(prev_sq_err))
+
+            print("Gain:     ", end="")
+            spacing = len(("{0}".format(inp[0])))
+            print(("{0:"+str(spacing)+"."+str(spacing-3)+"f}")
+                  .format(prev_sq_err-squared_error))
+
+        print("------")
+
         p.learn(inp[0], ans[0], lr)
         p.learn(inp[1], ans[1], lr)
         p.learn(inp[2], ans[2], lr)
         p.learn(inp[3], ans[3], lr)
-        guess.append(p.output(inp[0]))
-        guess.append(p.output(inp[1]))
-        guess.append(p.output(inp[2]))
-        guess.append(p.output(inp[3]))
-        i+=1
 
-        print_perceptron(p, i, inp, ans)
+        i+=1
