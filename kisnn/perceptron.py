@@ -7,35 +7,39 @@ class Perceptron:
     Receives x inputs, calculates their weighted sum (with a bias),
     which passes through an activation function to generate an output.
     """
-    def __init__(self, inputs_number, weights = []):
-        if not isinstance(weights, list):
-            raise TypeError("Weights must be a list")
-        if weights and len(weights) != inputs_number:
-            raise ValueError("Weights has %d values, expected %d"
-                            % (len(weights), inputs_number))
+    def __init__(self, inputs_number, weights = None, bias = None):
+        if weights is not None:
+            if not isinstance(weights, list):
+                raise TypeError("Weights must be passed as a list of weights")
+            if len(weights) != inputs_number:
+                raise ValueError("Weights has %d values, expected %d "
+                                  % (len(weights), inputs_number))
 
         self._inputs_num = int(inputs_number)
-        self._weights = weights
 
-        # If weights were not passed as an argument, create them
-        if not weights:
+        if weights is not None:
+            self._weights = weights
+        else:
+            # If weights were not passed as an argument, create them
+            self._weights = []
             for i in range(inputs_number):
                 self._weights.append(random()*2-1)
 
         # Add the Bias
-        self._weights.append(random()*2-1)
+        if bias is not None:
+            self._weights.append(float(bias))
+        else:
+            self._weights.append(random()*2-1)
 
     def __str__(self):
         weights = self._weights[:-1]
         bias = self._weights[-1:]
-        return "Inputs:  " + str(self._inputs_num) +                    \
-                                                                        \
-               "\nWeights: [" +                                         \
-               ( "][".join(["%5.3f"]*len(weights)) % tuple(weights) ) + \
-               "]" +                                                    \
-                                                                        \
-               "\nBias:    [" +                                         \
-               ( "".join(["%5.3f"]*len(bias)) % tuple(bias) ) +         \
+        return "Weight(s): [" +                                          \
+               ( "] [".join(["%5.3f"]*len(weights)) % tuple(weights) ) + \
+               "]" +                                                     \
+                                                                         \
+               "\nBias:      [" +                                        \
+               ( "".join(["%5.3f"]*len(bias)) % tuple(bias) ) +          \
                "]"
 
     def weighted_sum(self, inputs):
@@ -214,9 +218,7 @@ if __name__ == "__main__":
 
         print("------")
 
-        p.learn(inp[0], ans[0], lr)
-        p.learn(inp[1], ans[1], lr)
-        p.learn(inp[2], ans[2], lr)
-        p.learn(inp[3], ans[3], lr)
+        for x in range(len(inp)):
+            p.learn(inp[x], ans[x], lr)
 
         i+=1
