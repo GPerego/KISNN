@@ -11,9 +11,9 @@ class Perceptron:
         if weights is not None:
             if not isinstance(weights, list):
                 raise TypeError("Weights must be passed as a list of weights")
-            if len(weights) != inputs_number:
+            if len(weights) != int(inputs_number):
                 raise ValueError("Weights has %d values, expected %d "
-                                  % (len(weights), inputs_number))
+                                  % (len(weights), int(inputs_number)))
 
         self._inputs_num = int(inputs_number)
 
@@ -22,7 +22,7 @@ class Perceptron:
         else:
             # If weights were not passed as an argument, create them
             self._weights = []
-            for i in range(inputs_number):
+            for i in range(int(inputs_number)):
                 self._weights.append(random()*2-1)
 
         # Add the Bias
