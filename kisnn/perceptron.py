@@ -8,17 +8,26 @@ class Perceptron:
     which passes through an activation function to generate an output.
     """
     def __init__(self, inputs_number, weights = None, bias = None):
-        if weights is not None:
-            if not isinstance(weights, list):
-                raise TypeError("Weights must be passed as a list of weights")
-            if len(weights) != int(inputs_number):
-                raise ValueError("Weights has %d values, expected %d "
-                                  % (len(weights), int(inputs_number)))
-
         self._inputs_num = int(inputs_number)
+        self._weights = []
 
         if weights is not None:
-            self._weights = weights
+            # If weights were passed as an argument
+            if not isinstance(weights, (list, int, float)):
+                # If it's not a list or a number, raise an error
+                raise TypeError("Weights must be either a list or a number")
+
+            if isinstance(weights, list):
+                # If it's a list, check if its lenght is valid
+                if len(weights) != int(inputs_number):
+                    raise ValueError("Weights has %d values, expected %d "
+                                    % (len(weights), int(inputs_number)))
+                # Lenght is valid, we're set
+                self._weights = weights
+            else:
+                # If it's a number, create a list of weights with it
+                self._weights = [float(weights)] * int(inputs_number)
+
         else:
             # If weights were not passed as an argument, create them
             self._weights = []
@@ -71,7 +80,7 @@ class Perceptron:
         return round(wsum, 10) # Rounded to the 10th digit to return
                                # "human-friendly" numbers
 
-    def output(self, inputs, activation_type = ActivationType.SIGN):
+    def output(self, inputs, activation_type = ActivationType.STEP):
         """Generates the output.
 
         Passes the weighted sum of this perceptron's inputs through an
@@ -79,7 +88,7 @@ class Perceptron:
 
         Parameters:
         list inputs: list containing the inputs
-        IntEnum ActivationType: activation function type (default: sign(x))
+        IntEnum ActivationType: activation function type (default: step(x))
 
         Returns:
         float output
@@ -89,7 +98,7 @@ class Perceptron:
 
     def learn(self, inputs,
               answer, learning_rate,
-              activation_type = ActivationType.SIGN):
+              activation_type = ActivationType.STEP):
         """Supervisioned learning algorithm.
 
         Given the answer, trains this perceptron to evaluate a certain input
@@ -105,7 +114,7 @@ class Perceptron:
         float learning_rate: rate that determines how much the weights
                              adjusting modifies the weights and bias
                              (generally less than .5)
-        IntEnum ActivationType: activation function type (default: sign(x))
+        IntEnum ActivationType: activation function type (default: step(x))
         """
         guess = self.output(inputs, activation_type)
         error = float(answer) - float(guess)
@@ -134,91 +143,54 @@ class Perceptron:
 
 # Testing
 if __name__ == "__main__":
-    inp = [[1,1], [1,0], [0,1], [0,0]]
-    ans = [    1,    -1,    -1,    -1]
-    lr = 1/9
+    # Instantiation tests
 
-    p = Perceptron( len(inp[0]) )
-    squared_error = 1
-    prev_sq_err = 0
-    i = 0
+    # Only inputs_number
+    p = Perceptron(2)
+    print(p)
+    print("---")
 
-    while squared_error > .1 and i < 1000:
-        guess = []
-        for x in range(len(inp)):
-            guess.append(p.output(inp[x]))
+    # inputs_number and a float weight, random bias
+    p = Perceptron(5, .67)
+    print(p)
+    print("---")
 
-        wsum = []
-        for x in range(len(inp)):
-            wsum.append(p.weighted_sum(inp[x]))
+    # inputs_number and an int weight, random bias
+    p = Perceptron(4, 3)
+    print(p)
+    print("---")
 
-        error = []
-        for x in range(len(ans)):
-            error.append(ans[x] - guess[x])
+    # inputs_number and a list of weights, random bias
+    p = Perceptron(5, [.5, -.6, -7, 8, 0])
+    print(p)
+    print("---")
 
-        prev_sq_err = squared_error
-        squared_error = 0
-        for x in range(len(error)):
-            squared_error += error[x]*error[x]
+    # inputs_number and a float weight, int bias
+    p = Perceptron(5, -.4, 1)
+    print(p)
+    print("---")
 
-        squared_error = round(squared_error, 16)
+    # inputs_number and a float weight, float bias
+    p = Perceptron(5, -7.77, .33)
+    print(p)
+    print("---")
 
-        print("Iteration %d" % i)
-        print("Learning Rate: %.3f\n" % lr)
-        print(p)
-        print()
+    # inputs_number and an int weight, int bias
+    p = Perceptron(4, 0, -3)
+    print(p)
+    print("---")
 
-        print("Inputs:   ", end="")
-        for x in range(len(inp)):
-            print("{0}".format(inp[x]), end = " ")
-        print()
+    # inputs_number and an int weight, float bias
+    p = Perceptron(4, 3, 4/7)
+    print(p)
+    print("---")
 
-        print("WSum:     ", end="")
-        for x in range(len(inp)):
-            spacing = len(("{0}".format(inp[x])))
-            print(("{0:"+str(spacing)+"."+str(spacing-3)+"f}").format(wsum[x]),
-            end = " ")
-        print()
+    # inputs_number and a list of weights, int bias
+    p = Perceptron(3, [.5, -.6, 0], 0)
+    print(p)
+    print("---")
 
-        print("Output:   ", end="")
-        for x in range(len(inp)):
-            spacing = len(("{0}".format(inp[x])))
-            print(("{0:"+str(spacing)+"."+str(spacing-3)+"f}").format(guess[x]),
-            end = " ")
-        print()
-
-        print("Expected: ", end="")
-        for x in range(len(inp)):
-            spacing = len(("{0}".format(inp[x])))
-            print(("{0:"+str(spacing)+"."+str(spacing-3)+"f}").format(ans[x]),
-                   end = " ")
-        print()
-
-        print("Error:    ", end="")
-        for x in range(len(inp)):
-            spacing = len(("{0}".format(inp[x])))
-            print(("{0:"+str(spacing)+"."+str(spacing-3)+"f}").format(error[x]),
-                   end = " ")
-        print("\n")
-
-        spacing = len(("{0}".format(inp[0])))
-        print("Sq Error: " + ("{0:"+str(spacing)+"."+str(spacing-3)+"f}")
-              .format(squared_error))
-
-        if i != 0:
-            print("Previous: ", end="")
-            spacing = len(("{0}".format(inp[0])))
-            print(("{0:"+str(spacing)+"."+str(spacing-3)+"f}")
-                  .format(prev_sq_err))
-
-            print("Gain:     ", end="")
-            spacing = len(("{0}".format(inp[0])))
-            print(("{0:"+str(spacing)+"."+str(spacing-3)+"f}")
-                  .format(prev_sq_err-squared_error))
-
-        print("------")
-
-        for x in range(len(inp)):
-            p.learn(inp[x], ans[x], lr)
-
-        i+=1
+    # inputs_number and a list of weights, float bias
+    p = Perceptron(4, [-.6, -7, 8, 0], -1.17)
+    print(p)
+    print("---")
